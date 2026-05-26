@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>こめぴ日記</title>
+
+<style>
+body{
+    font-family:sans-serif;
+    background:#fffaf5;
+    color:#444;
+    text-align:center;
+    padding:20px;
+}
+
+.container{
+    max-width:600px;
+    margin:auto;
+}
+
+h1{
+    font-size:2em;
+    margin-bottom:10px;
+}
+
+textarea{
+    width:100%;
+    height:140px;
+    padding:10px;
+    font-size:16px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    box-sizing:border-box;
+}
+
+button{
+    margin-top:15px;
+    padding:12px 20px;
+    font-size:16px;
+    border:none;
+    border-radius:10px;
+    background:#ffb6b9;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:0.9;
+}
+
+.result{
+    margin-top:30px;
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+    white-space:pre-wrap;
+    text-align:left;
+}
+
+.main-image{
+    width:220px;
+    margin:20px auto;
+    display:block;
+}
+
+.diary-image{
+    width:180px;
+    margin:20px auto;
+    display:block;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<img src="images/komepi-title.png" class="main-image">
+
+<h1>こめぴ日記</h1>
+
+<textarea id="inputText" placeholder="今日あったことを書いてね"></textarea>
+
+<br>
+
+<button onclick="generateDiary()">日記を書く</button>
+
+<div id="result" class="result" style="display:none;"></div>
+
+<img id="moodImage" class="diary-image" style="display:none;">
+
+</div>
+
+<script>
+
+const WORKER_URL = "ここにCloudflare WorkersのURL";
+
+async function generateDiary(){
+
+    const input = document.getElementById("inputText").value;
+
+    if(!input){
+        alert("文章を書いてね！");
+        return;
+    }
+
+    const resultDiv = document.getElementById("result");
+    const moodImage = document.getElementById("moodImage");
+
+    resultDiv.style.display = "block";
+    resultDiv.innerHTML = "こめぴが考え中…";
+
+    moodImage.style.display = "none";
+
+    try{
+
+        const response = await fetch(WORKER_URL,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                text:input
+            })
+        });
+
+        const data = await response.json();
+
+        resultDiv.innerHTML = data.diary;
+
+        let imagePath = "images/楽しいこめぴ.png";
+
+        if(data.mood.includes("嬉")){
+            imagePath = "images/嬉しいこめぴ.png";
+        }
+        else if(data.mood.includes("悲")){
+            imagePath = "images/悲しいこめぴ.png";
+        }
+        else if(data.mood.includes("怒")){
+            imagePath = "images/怒りのこめぴ.png";
+        }
+
+        moodImage.src = imagePath;
+        moodImage.style.display = "block";
+
+    }catch(error){
+
+        resultDiv.innerHTML = "エラーが発生しました";
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
